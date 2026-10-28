@@ -1,0 +1,268 @@
+name: Build APK
+on:
+  workflow_dispatch:
+  push:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Create Android project
+        run: |
+          set -e
+          mkdir -p app/src/main/java/com/upvc/baroptimizer app/src/main/assets app/src/main/res/drawable app/src/main/res/values app/src/main/res/values-v29
+          cat > app/src/main/assets/index.html <<'EOF'
+          <!doctype html>
+          <html lang="fa" dir="rtl"><head><meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+          <title>بهینه‌ساز برش UPVC</title>
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap">
+          <style>
+          :root{--bg:#eef3f6;--c:#fff;--t:#14202a;--m:#5d6b76;--a:#1a8fc4;--on:#fff;--b:#d3dde4;--in:#f4f8fa;--w:#dfe6eb;--a2:#0f6a96;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+          @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f171b;--c:#151f25;--t:#f2f6f8;--m:#9aa8b1;--a:#5ab9e3;--on:#08141b;--b:#26333b;--in:#0b1115;--w:#26333b;--a2:#3a86a8}}
+          :root[data-theme="dark"]{--bg:#0f171b;--c:#151f25;--t:#f2f6f8;--m:#9aa8b1;--a:#5ab9e3;--on:#08141b;--b:#26333b;--in:#0b1115;--w:#26333b;--a2:#3a86a8}
+          *{box-sizing:border-box}html,body{margin:0}[hidden]{display:none!important}
+          body{background:var(--bg);color:var(--t);font:15px/1.8 Vazirmatn,Tahoma,system-ui,sans-serif}
+          main{padding:18px 14px 50px;max-width:640px;margin:auto}
+          h1{margin:6px 0 4px;font-size:28px;line-height:1.4}
+          .sub{color:var(--m);margin:0 0 18px}
+          .card{background:var(--c);border:1px solid var(--b);border-radius:22px;padding:18px;margin-bottom:16px}
+          h2{margin:0 0 14px;font-size:18px}
+          label{display:block;color:var(--m);margin-bottom:6px}
+          input,textarea{width:100%;background:var(--in);color:var(--t);border:1px solid var(--b);border-radius:16px;padding:12px;font:inherit;font-size:19px;text-align:center}
+          textarea{text-align:right;font-size:16px}
+          .g{display:grid;grid-template-columns:1fr 1fr;gap:14px}.g3{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}
+          .note{color:var(--m);font-size:14px;margin:12px 0 0}
+          .seg{display:inline-flex;border:1px solid var(--b);border-radius:14px;overflow:hidden;margin-bottom:14px}
+          .seg button{background:transparent;color:var(--t);border:0;padding:8px 20px;font:inherit;font-size:17px}.seg button.on{background:var(--a);color:var(--on)}
+          .top{display:flex;justify-content:space-between;align-items:center}
+          .btn{background:var(--a);color:var(--on);border:0;border-radius:16px;padding:14px 18px;font:inherit;font-size:17px;font-weight:700;flex:1}
+          .btn.o{background:transparent;color:var(--t);border:1px solid var(--b);font-weight:400}
+          .x{background:var(--in);color:var(--t);border:1px solid var(--b);border-radius:16px;width:52px;height:56px;font-size:24px}
+          .row{display:flex;gap:12px;margin-top:14px}
+          hr{border:0;border-top:1px solid var(--b);margin:16px 0}
+          summary{font-size:17px;font-weight:700;cursor:pointer}
+          .chip{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--b)}
+          .chip button{background:transparent;border:1px solid var(--b);color:var(--t);border-radius:10px;padding:2px 10px;font:inherit}
+          .kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}.kpi b{display:block;font-size:22px}.kpi span,.m{color:var(--m);font-size:13px}
+          .ltr{direction:ltr;text-align:right}.err{color:#e5484d;font-size:14px}
+          svg{width:100%;display:block;margin:4px 0}svg *{vector-effect:non-scaling-stroke}svg text{stroke:none;vector-effect:none}
+          #lock{max-width:380px;margin:20vh auto 0;padding:0 14px;text-align:center}
+          .bh{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px}
+          .bar{position:relative;height:54px;direction:ltr;background:var(--in);border:1px solid var(--b);border-radius:10px;overflow:hidden;margin:4px 0}
+          .sg{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;border-left:2px solid var(--c);font-style:normal;overflow:hidden}
+          .sg b{font-size:14px}.p0{background:var(--a);color:var(--on)}.p1{background:var(--a2);color:#fff}
+          .z{background:repeating-linear-gradient(45deg,var(--w),var(--w) 5px,transparent 5px,transparent 10px);color:var(--m)}
+          .leg{font-size:14px}
+          </style></head><body>
+          <div id="lock"><div class="card"><div style="font-size:46px">🔒</div><h2>بهینه‌ساز برش UPVC</h2><div class="m" style="margin-bottom:12px">رمز ورود را وارد کنید</div>
+          <input id="pw" type="password" inputmode="numeric" autocomplete="off"><div class="err" id="msg" style="min-height:26px;margin-top:6px"></div><div class="row"><button class="btn" onclick="login()">ورود</button></div></div></div>
+          <main id="app" hidden>
+          <div class="top"><h1>بهینه‌ساز برش UPVC</h1><button class="x" style="width:44px;height:44px;font-size:18px" onclick="lockIt()" title="قفل">🔒</button></div>
+          <p class="sub">طول و تعداد قطعه‌ها را بنویسید تا کمترین تعداد شاخه و نقشه برش هر شاخه را ببینید.</p>
+          <div class="card"><h2>شاخه و تیغه</h2>
+           <div class="g"><div><label>طول شاخه (میلی‌متر)</label><input id="bar" inputmode="decimal"></div><div><label>ضخامت تیغه (میلی‌متر)</label><input id="kerf" inputmode="decimal"></div>
+           <div><label>پرت سر شاخه (میلی‌متر)</label><input id="trim" inputmode="decimal"></div></div>
+           <p class="note">پرت سر شاخه یعنی مقداری که قبل از اولین قطعه از ابتدا یا انتهای شاخه دور ریخته می‌شود. اگر لازم نیست صفر بگذارید.</p></div>
+          <div class="card"><h2>قطعه‌ها</h2>
+           <div class="seg"><button id="umm" onclick="setU('mm')">میلی‌متر</button><button id="ucm" onclick="setU('cm')">سانتی‌متر</button></div>
+           <div class="g3"><div><label id="ll">طول (سانتی‌متر)</label><input id="L" inputmode="decimal"></div><div><label>تعداد</label><input id="Q" inputmode="numeric"></div><button class="x" onclick="clrF()" title="پاک کردن فیلدها">✕</button></div>
+           <div class="row"><button class="btn" onclick="addP()">افزودن قطعه</button><button class="btn o" onclick="clrAll()">پاک کردن همه</button></div>
+           <div id="pl" style="margin-top:10px"></div><hr>
+           <details><summary>چسباندن لیست از متن</summary><p class="note">هر خط: طول*تعداد (مثلاً 120*4). واحد همان واحد انتخاب‌شده است.</p><textarea id="bulk" rows="5" class="ltr" style="text-align:left"></textarea><div class="row"><button class="btn" onclick="bulkAdd()">افزودن از متن</button></div></details>
+           <p class="note">برای برش ۴۵ درجه، طول بیرونی (بلندترین ضلع قطعه) را وارد کنید.</p></div>
+          <div id="res"></div>
+          </main>
+          <script>
+          const $=s=>document.querySelector(s),sum=a=>a.reduce((x,y)=>x+y,0);
+          const nd=s=>String(s).replace(/[۰-۹]/g,x=>x.charCodeAt(0)-1776).replace(/[٠-٩]/g,x=>x.charCodeAt(0)-1632);
+          const num=s=>{const v=parseFloat(nd(s).replace(/[٫,]/g,'.'));return isFinite(v)?v:0};
+          const H='cbcf0f149bd1dad04861064bc7ef60ab781c502d76cbc00a3f75eb20da0787f2';
+          async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+          const YR=365*24*3600*1000,unlock=()=>{$('#lock').hidden=true;$('#app').hidden=false;calc()};
+          async function login(){let ok=false;try{ok=(await sha(nd($('#pw').value).trim()))===H}catch(x){$('#msg').textContent='این مرورگر پشتیبانی نمی‌کند';return}
+           if(ok){try{localStorage.setItem('bo3auth',Date.now())}catch(x){}$('#pw').value='';$('#msg').textContent='';unlock()}else{$('#msg').textContent='رمز اشتباه است';$('#pw').value=''}}
+          function lockIt(){try{localStorage.removeItem('bo3auth')}catch(x){}$('#app').hidden=true;$('#lock').hidden=false}
+          $('#pw').addEventListener('keydown',x=>{if(x.key=='Enter')login()});
+
+          let St={bar:6000,kerf:3,trim:0,unit:'cm',pcs:[]};
+          try{Object.assign(St,JSON.parse(localStorage.getItem('bo3')||'{}'))}catch(x){}
+          const save=()=>{try{localStorage.setItem('bo3',JSON.stringify(St))}catch(x){}};
+          const U=()=>St.unit=='cm'?10:1,d=v=>String(+(v/(St.unit=='cm'?10:1)).toFixed(1)),un=()=>St.unit=='cm'?'سانتی‌متر':'میلی‌متر';
+          $('#bar').value=St.bar;$('#kerf').value=St.kerf;$('#trim').value=St.trim;
+          let tm;const later=()=>{clearTimeout(tm);tm=setTimeout(calc,350)};
+          ['bar','kerf','trim'].forEach(k=>$('#'+k).oninput=()=>{St[k]=Math.max(0,num($('#'+k).value));save();later()});
+          function setU(u){St.unit=u;save();ui();pl();calc()}
+          function ui(){$('#umm').classList.toggle('on',St.unit=='mm');$('#ucm').classList.toggle('on',St.unit=='cm');$('#ll').textContent='طول ('+un()+')'}
+          function put(l,q){q=Math.round(q);l=Math.round(l);if(!(l>0&&q>0))return;const x=St.pcs.find(p=>p.l==l);if(x)x.q+=q;else St.pcs.push({l,q})}
+          function addP(){put(num($('#L').value)*U(),num($('#Q').value)||1);$('#L').value='';$('#Q').value='';save();pl();calc();$('#L').focus()}
+          function clrF(){$('#L').value='';$('#Q').value='';$('#L').focus()}
+          function clrAll(){if(St.pcs.length&&!confirm('همهٔ قطعه‌ها پاک شود؟'))return;St.pcs=[];save();pl();calc()}
+          function rmP(i){St.pcs.splice(i,1);save();pl();calc()}
+          function bulkAdd(){nd($('#bulk').value).split(/\n|;|،/).forEach(r=>{const m=r.match(/^\s*(\d+(?:[.,٫]\d+)?)(?:\s*[*x×]\s*|\s+)?(\d+)?/);if(m)put(num(m[1])*U(),+(m[2]||1))});$('#bulk').value='';save();pl();calc()}
+          ['L','Q'].forEach(i=>$('#'+i).addEventListener('keydown',x=>{if(x.key=='Enter')addP()}));
+          function pl(){const t=sum(St.pcs.map(p=>p.q));$('#pl').innerHTML=St.pcs.map((p,i)=>`<div class="chip"><span>${d(p.l)} ${un()} × ${p.q}</span><button onclick="rmP(${i})">حذف</button></div>`).join('')+(t?`<div class="m" style="margin-top:6px">جمع: ${t} قطعه • ${d(sum(St.pcs.map(p=>p.l*p.q)))} ${un()}</div>`:'')}
+          const rem=b=>Math.max(0,b.r-St.kerf);
+          function pack(order,Lu,k){const bins=[];for(const x of order){let bi=-1,br=1e9;bins.forEach((b,i)=>{const s=b.r-(x+k);if(s>=0&&s<br){br=s;bi=i}});if(bi<0){bins.push({c:[],r:Lu+k});bi=bins.length-1}bins[bi].c.push(x);bins[bi].r-=x+k}return bins}
+          const score=b=>b.length*1e7-Math.max(0,...b.map(rem));
+          function calc(){if($('#app').hidden)return;const L=St.bar,k=St.kerf,tr=St.trim,Lu=L-tr;
+           if(!St.pcs.length){$('#res').innerHTML='';return}
+           if(Lu<=0){$('#res').innerHTML='<div class="card err">طول شاخه باید از پرت سر شاخه بیشتر باشد</div>';return}
+           const all=[];St.pcs.forEach(p=>{for(let i=0;i<p.q;i++)all.push(p.l)});const bad=all.filter(x=>x>Lu),ok=all.filter(x=>x<=Lu).sort((a,b)=>b-a);
+           let best=pack(ok,Lu,k),bs=score(best);const t0=Date.now();
+           for(let i=0;i<3000&&Date.now()-t0<1200;i++){const o=ok.map(x=>[x*(1+Math.random()*.35),x]).sort((a,b)=>b[0]-a[0]).map(a=>a[1]),r=pack(o,Lu,k),s=score(r);if(s<bs){bs=s;best=r}}
+           const n=best.length,net=sum(ok),waste=n?1-net/(n*L):0,gr={};
+           best.forEach(b=>{const key=b.c.slice().sort((a,c)=>c-a).map(d).join(' + ');gr[key]=gr[key]||{b,n:0,key};gr[key].n++});
+           let h=`<div class="card"><h2>نتیجه</h2><div class="kpi"><div><b>${n}</b><span>شاخه</span></div><div><b>${(waste*100).toFixed(1)}٪</b><span>پرت کل</span></div><div><b>${d(net)}</b><span>جمع قطعات (${un()})</span></div></div>`;
+           if(bad.length)h+=`<p class="err">قطعه‌های بلندتر از شاخه (حذف شدند): ${bad.map(d).join('، ')}</p>`;
+           h+=`</div><div class="card"><h2>الگوهای برش</h2>`+Object.values(gr).map(g=>`<div class="chip" style="display:block"><b>${g.n} شاخه</b><div class="m ltr">${g.key} • مانده ${d(rem(g.b))}</div></div>`).join('')+'</div>';
+           h+=`<div class="card"><h2>نقشهٔ برش هر شاخه</h2><div class="m">طول هر شاخه ${d(L)} ${un()}${tr>0?' • پرت سر شاخه '+d(tr):''}</div>`;
+           const pc=v=>v/L*100;
+           best.forEach((b,i)=>{let x=tr,sg='';
+            if(tr>0)sg+=`<i class="sg z" style="left:0;width:${pc(tr)}%"></i>`;
+            b.c.forEach((c,j)=>{sg+=`<i class="sg p${j%2}" style="left:${pc(x)}%;width:${pc(c)}%">${pc(c)>9?`<b>${d(c)}</b>`:''}</i>`;x+=c+k});
+            const m=rem(b);if(m>0)sg+=`<i class="sg z" style="left:${pc(L-m)}%;width:${pc(m)}%">${pc(m)>9?`<b>${d(m)}</b>`:''}</i>`;
+            h+=`<div class="bh"><b>شاخه ${i+1}</b><span class="m">${b.c.length} قطعه</span></div><div class="bar">${sg}</div><div class="leg ltr">${b.c.map(d).join(' | ')}<span class="m"> • مانده ${d(m)}</span></div>`});
+           $('#res').innerHTML=h+'</div>'}
+          ui();pl();
+          try{const t=+localStorage.getItem('bo3auth'),n=Date.now();if(t&&n>=t&&n-t<YR)unlock()}catch(x){}
+          </script></body></html>
+          EOF
+          cat > settings.gradle <<'EOF'
+          pluginManagement {
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
+          }
+          dependencyResolutionManagement {
+              repositories { google(); mavenCentral() }
+          }
+          rootProject.name = "UpvcBarOptimizer"
+          include ':app'
+          EOF
+          cat > build.gradle <<'EOF'
+          plugins { id 'com.android.application' version '8.5.2' apply false }
+          EOF
+          cat > gradle.properties <<'EOF'
+          android.useAndroidX=true
+          org.gradle.jvmargs=-Xmx2048m
+          EOF
+          cat > app/build.gradle <<'EOF'
+          plugins { id 'com.android.application' }
+          android {
+              namespace 'com.upvc.baroptimizer'
+              compileSdk 34
+              defaultConfig {
+                  applicationId "com.upvc.baroptimizer"
+                  minSdk 24
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+          dependencies { implementation 'androidx.webkit:webkit:1.9.0' }
+          EOF
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET"/>
+              <application
+                  android:label="بهینه‌ساز برش UPVC"
+                  android:icon="@drawable/ic_launcher"
+                  android:theme="@style/AppTheme"
+                  android:allowBackup="true">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:configChanges="orientation|screenSize|keyboardHidden|uiMode">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+          cat > app/src/main/java/com/upvc/baroptimizer/MainActivity.java <<'EOF'
+          package com.upvc.baroptimizer;
+
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.webkit.WebResourceRequest;
+          import android.webkit.WebResourceResponse;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          import androidx.webkit.WebViewAssetLoader;
+
+          public class MainActivity extends Activity {
+              private WebView web;
+
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  web = new WebView(this);
+                  setContentView(web);
+                  WebSettings s = web.getSettings();
+                  s.setJavaScriptEnabled(true);
+                  s.setDomStorageEnabled(true);
+                  s.setAllowFileAccess(false);
+                  final WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
+                      .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                      .build();
+                  web.setWebViewClient(new WebViewClient() {
+                      @Override
+                      public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                          return loader.shouldInterceptRequest(request.getUrl());
+                      }
+                  });
+                  web.loadUrl("https://appassets.androidplatform.net/assets/index.html");
+              }
+
+              @Override
+              public void onBackPressed() {
+                  if (web.canGoBack()) web.goBack(); else super.onBackPressed();
+              }
+          }
+          EOF
+          cat > app/src/main/res/drawable/ic_launcher.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp" android:height="108dp"
+              android:viewportWidth="108" android:viewportHeight="108">
+              <path android:fillColor="#1A8FC4" android:pathData="M0,0h108v108h-108z"/>
+              <path android:fillColor="#FFFFFF" android:pathData="M20,36h68v10h-68z"/>
+              <path android:fillColor="#FFFFFF" android:pathData="M20,56h40v10h-40z"/>
+              <path android:fillColor="#B7E3F5" android:pathData="M64,56h24v10h-24z"/>
+          </vector>
+          EOF
+          cat > app/src/main/res/values/styles.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="AppTheme" parent="android:Theme.DeviceDefault.Light.NoActionBar"/>
+          </resources>
+          EOF
+          cat > app/src/main/res/values-v29/styles.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="AppTheme" parent="android:Theme.DeviceDefault.DayNight">
+                  <item name="android:windowActionBar">false</item>
+                  <item name="android:windowNoTitle">true</item>
+              </style>
+          </resources>
+          EOF
+      - name: Build
+        run: gradle assembleDebug --no-daemon --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: upvc-bar-optimizer-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
